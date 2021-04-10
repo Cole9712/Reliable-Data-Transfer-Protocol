@@ -29,4 +29,9 @@
 
 2. Pipelined Protocol
 
-Go-Back N
+   Go-Back N
+
+## Plan
+
+- sender prepares and sends packet
+- recieve recieves packet, unpack and log the data
