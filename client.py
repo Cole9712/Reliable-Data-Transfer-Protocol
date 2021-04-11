@@ -44,6 +44,7 @@ def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
     dest_port = struct.unpack('!H', recvData[0:2])[0]
     asfByte = struct.unpack('!B', recvData[14:15])[0]
 
+    # check FIN bit to see if file exists
     if format(asfByte, '08b')[2:3] == '1':
         print('No such file on server, connection close!')
         return
