@@ -1,7 +1,8 @@
-import socket, struct, random
+import socket, struct, random, sys, os
 import sender
 
 PORT = 6666
+
 
 # connect with client
 def connect( sock, userCount ): 
@@ -30,9 +31,10 @@ def connect( sock, userCount ):
         # client acknowledged handshake
         if( ackN == seqN + 1 and ack == "1" ):
             file = packet[16:].decode( 'utf-8' )
+            path = sys.path[0] + file
 
             # file exist?
-            if( sender.validate( file ) ):
+            if( os.path.isfile( path ) ):
                 print( "file found :) " )
                 src = PORT
                 dest = struct.unpack( "!H", packet[0:2] )[0]
@@ -48,7 +50,17 @@ def connect( sock, userCount ):
             else:
                 # ignore client
                 userCount -= 1
-                print( "file not find :(" )
+                print( "file not found :(" )
+                src = PORT
+                dest = struct.unpack( "!H", packet[0:2] )[0]
+                seqN += 1
+                ackN = struct.unpack( "!I", packet[4:8] )[0] + 1
+                window += 1
+                asf = int( '11100000', 2 )      # ack, syn, fin
+
+                header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
+                sock.sendto( header, addr )
+
 
 
 # listen for connection
