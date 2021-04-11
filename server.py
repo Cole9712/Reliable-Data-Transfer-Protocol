@@ -6,8 +6,8 @@ PORT = 6666
 # connect with client
 def connect( sock, userCount ): 
     packet, addr = sock.recvfrom( 1040 )
-    syn = format( struct.unpack( "!B", packet[14] )[0], '08b' )[1]
-    print( "Establishing connection with " + addr )
+    syn = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[1]
+    print( "Establishing connection with " + str( addr ) )
    
     # client asks for connection
     if( syn == '1' ):
@@ -21,15 +21,15 @@ def connect( sock, userCount ):
         header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
         sock.sendto( header, addr )
         userCount += 1
-        print( "Acknowledgement sent to " + addr )
+        print( "Acknowledgement sent to " + str( addr ) )
 
         packet, addr = sock.recvfrom( 1040 )
         ackN = struct.unpack( "!I", packet[8:12] )[0]
-        ack = struct.unpack( "!B", packet[14:15] )[0][0]
+        ack = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[0]
 
         # client acknowledged handshake
         if( ackN == seqN + 1 and ack == "1" ):
-            file = packet[16:].decode( 'uft-8' )
+            file = packet[16:].decode( 'utf-8' )
 
             # file exist?
             if( sender.validate( file ) ):
