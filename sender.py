@@ -47,6 +47,7 @@ def sendFile( sock, addr, header, path ):
     isSending = True
     while( isSending ):
         # send 5 segments
+        i = 0
         for i in range( 5 ):
             segment = file.read( MSS )
 
@@ -54,7 +55,7 @@ def sendFile( sock, addr, header, path ):
                 header = nextHeader( header )
                 sock.sendto( header + segment, addr )
             else:
-                file.colse()
+                file.close()
                 isSending = False
                 break
 
