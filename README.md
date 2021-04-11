@@ -34,4 +34,8 @@
 ## Plan
 
 - sender prepares and sends packet
-- recieve recieves packet, unpack and log the data
+- reciever recieves packet, unpack and log the data
+
+## Usage
+
+- two ways for invoke client
