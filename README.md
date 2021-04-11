@@ -26,6 +26,7 @@
    |                             data                              |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
+   Header format = "!HHIIHBx"
 
 2. Pipelined Protocol
 
