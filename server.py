@@ -6,9 +6,9 @@ PORT = 6666
 
 # connect with client
 def connect( sock, userCount ): 
-    packet, addr = sock.recvfrom( 1040 )
+    packet, addr1 = sock.recvfrom( 1040 )
     syn = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[1]
-    print( "Establishing connection with " + str( addr ) )
+    print( "Establishing connection with " + str( addr1 ) )
    
     # client asks for connection
     if( syn == '1' ):
@@ -20,16 +20,16 @@ def connect( sock, userCount ):
         asf = int( '11000000', 2 )      # ack, syn, fin
         
         header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
-        sock.sendto( header, addr )
+        sock.sendto( header, addr1 )
         userCount += 1
-        print( "Acknowledgement sent to " + str( addr ) )
+        print( "Acknowledgement sent to " + str( addr1 ) )
 
-        packet, addr = sock.recvfrom( 1040 )
+        packet, addr2 = sock.recvfrom( 1040 )
         ackN = struct.unpack( "!I", packet[8:12] )[0]
         ack = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[0]
 
         # client acknowledged handshake
-        if( ackN == seqN + 1 and ack == "1" ):
+        if( addr1 == addr2 and ackN == seqN + 1 and ack == "1" ):
             file = packet[16:].decode( 'utf-8' )
             path = sys.path[0] + "/" + file
 
@@ -45,21 +45,41 @@ def connect( sock, userCount ):
 
                 header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
                 data = struct.pack( "!H", PORT + userCount )
-                sock.sendto( header + data, addr )
+                sock.sendto( header + data, addr2 )
+                # sender.send( addr2, header, userCount, path )
             
             else:
-                # ignore client
-                userCount -= 1
                 print( "file not found :(" )
                 src = PORT
                 dest = struct.unpack( "!H", packet[0:2] )[0]
                 seqN += 1
                 ackN = struct.unpack( "!I", packet[4:8] )[0] + 1
                 window += 1
-                asf = int( '11100000', 2 )      # ack, syn, fin
+                asf = int( '10100000', 2 )      # ack, syn, fin
 
                 header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
-                sock.sendto( header, addr )
+                sock.sendto( header, addr2 )
+
+                packet, addr3 = sock.recvfrom( 1040 )
+                ackN = struct.unpack( "!I", packet[8:12] )[0]
+                ack = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[0]
+
+                if( addr2 == addr3 and ackN == seqN + 1 and ack == "1" ):
+                    packet, addr4 = sock.recvfrom( 1040 )
+                    ackN = struct.unpack( "!I", packet[8:12] )[0]
+                    fin = format( struct.unpack( "!B", packet[14:15] )[2], '08b' )[0]
+
+                    if( addr3 == addr4 and ackN == seqN + 1 and fin == "1" ):
+                        src = PORT
+                        dest = struct.unpack( "!H", packet[0:2] )[0]
+                        seqN += 1
+                        ackN = struct.unpack( "!I", packet[4:8] )[0] + 1
+                        window += 1
+                        asf = int( '10100000', 2 )      # ack, syn, fin
+                        
+                        header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
+                        sock.sendto( header, addr4 )
+                        userCount -= 1
 
 
 
@@ -75,8 +95,12 @@ def listenOn():
         
         
 def main():
-   listenOn()
- 
+    try:
+        listenOn()
+    except KeyboardInterrupt:
+        print( "\nThank you for using Coss Transport." )
+        print( "Exiting..." )
+        sys.exit( 0 )
 
 if __name__ == "__main__":
      main()
