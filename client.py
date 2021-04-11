@@ -1,4 +1,4 @@
-import socket, os, sys, struct
+import socket, os, sys, struct, receiver
 
 seqNum = 0
 source_Port = 9009
@@ -26,7 +26,7 @@ def main():
     _, _, seqNum, ackNum, _, asfByte = struct.unpack('!HHIIHBx', recvData)
 
     # check if ASF received byte is correct
-    if asfByte != setASFbyte():
+    if asfByte != setASFbyte(1,1,0):
         print("ASF byte incorrect, connection fail to establish")
         sys.exit(1)
     
@@ -36,18 +36,17 @@ def main():
     s.sendto(packet, (dest_ip, dest_port))
     print('HandShaking succeed! Request for file:' + filePath)
 
-    
+    # recv from server if file exists
+    # Check if file exists
+    recvData, _ = s.recvfrom(1040)
+    dest_port, _, _, _, _, asfByte = struct.unpack('!HHIIHBx', recvData)
+    if format(asfByte, '08b')[2:3] == 1:
+        print('No such file on server, connection close!')
 
+    # Start transfer the file
+    print("Starting tranfering file...")
+    receiver.recvFile(dest_port, filePath)
 
-
-    
-    
-
-    
-    
-
-
-    
 
 
 if __name__ == '__main__':
