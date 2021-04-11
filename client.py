@@ -23,7 +23,9 @@ def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
     packet = struct.pack('!HHIIHBx', source_Port, dest_port, seqNum, 0, 0, setASFbyte(0,1,0))
     s.sendto(packet, (dest_ip, dest_port))
     recvData, _ = s.recvfrom(1040)
-    _, _, seqNum, ackNum, _, asfByte = struct.unpack('!HHIIHBx', recvData)
+    seqNum = struct.unpack('!I', recvData[4:8])[0]
+    ackNum = struct.unpack('!I', recvData[8:12])[0]
+    asfByte = struct.unpack('!B', recvData[14:15])[0]
 
     # check if ASF received byte is correct
     if asfByte != setASFbyte(1,1,0):
@@ -39,9 +41,12 @@ def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
     # recv from server if file exists
     # Check if file exists
     recvData, _ = s.recvfrom(1040)
-    dest_port, _, _, _, _, asfByte = struct.unpack('!HHIIHBx', recvData)
-    if format(asfByte, '08b')[2:3] == 1:
+    dest_port = struct.unpack('!H', recvData[0:2])[0]
+    asfByte = struct.unpack('!B', recvData[14:15])[0]
+
+    if format(asfByte, '08b')[2:3] == '1':
         print('No such file on server, connection close!')
+        return
 
     # Start transfer the file
     print("Starting tranfering file...")
