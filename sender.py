@@ -1,17 +1,19 @@
-import socket, sys, time
+import socket, struct, sys, time
 
-def ip_header_constructor(sourceIP, destinationIP):
-    # set ip
+def listenOn( port ):
+    sock = socket.socket( socket.AF_INET, socket.SOCK_RAW )
+    sock.bind( ( '', port ) )
+    print ( "Listening on " + str( port ) )
+
+    while 1:
+        recPacket, addr = sock.recvfrom(1024)
+        i1, i2, i3, i4 = struct.unpack( "iiii", recPacket[20:36] )
+        print( str( i1 ) + " " + str( i2 ) + " " + str( i3 ) + " " + str( i4 ) )
 
 def main():
+   listenOn( 6666 ) 
 
-    # create raw socket
-    try:
-        # using raw IP Packets
-        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
-    except socket.error:
-        print ('Socket creation error')
-        sys.exit()
+
     
 
 if __name__ == "__main__":
