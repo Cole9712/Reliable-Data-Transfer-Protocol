@@ -27,6 +27,7 @@
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
    Header format = "!HHIIHBx"
+   Total Segment Size = 16 bytes (Header) + 1024 bytes (Payload)
 
 2. Pipelined Protocol
 
