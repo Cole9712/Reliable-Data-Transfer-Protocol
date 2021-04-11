@@ -8,7 +8,7 @@ def setASFbyte(ack=0,syn=0,fin=0):
     byte = str(ack)+str(syn)+str(fin)+('00000')
     return int(byte, 2)
 
-def main():
+def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
 
     # show local file path
     print("Received File Path is " + filePath)
@@ -45,7 +45,7 @@ def main():
 
     # Start transfer the file
     print("Starting tranfering file...")
-    receiver.recvFile(dest_port, filePath)
+    # receiver.recvFile(dest_port, filePath)
 
 
 
@@ -57,4 +57,4 @@ if __name__ == '__main__':
     dest_ip = sys.argv[2]
     dest_port = int(sys.argv[3])
     filePath = sys.argv[4]
-    main()
+    main(cmd, dest_ip, dest_port, filePath)
