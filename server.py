@@ -31,7 +31,7 @@ def connect( sock, userCount ):
         # client acknowledged handshake
         if( ackN == seqN + 1 and ack == "1" ):
             file = packet[16:].decode( 'utf-8' )
-            path = sys.path[0] + file
+            path = sys.path[0] + "/" + file
 
             # file exist?
             if( os.path.isfile( path ) ):
