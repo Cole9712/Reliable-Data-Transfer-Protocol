@@ -11,6 +11,8 @@ TIMEOUT = 1     # !!! implement variation timeout later...
 
 ########## Variables ##########
 
+segSent = 0
+ackRecv = 0
 currentAckN = 0     # acknowledge number to receiver
 lastHeader = None   # reserved for header of the last segment
 
@@ -60,6 +62,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
 def sendNextSegment( sock, addr, file, header ) -> None:
     global lastHeader
     global currentAckN
+    global segSent
     while( not file.closed ):
         segment = file.read( MSS )
 
@@ -82,6 +85,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             empty1.acquire()
             mutex1.acquire()
             cwnd.append( packet( header, segment ) )
+            segSent += 1
             mutex1.release()
             full1.release()
 
@@ -124,15 +128,16 @@ def sendLostSegment( sock, addr ) -> None:
 
 
 # listen for incoming ack
-def listenForAck( sock ) -> None:
+def listenForAck( sock, file ) -> None:
     global currentAckN
+    global ackRecv
     while True:
         print(1)
         mutex1.acquire()
         length = len( cwnd )
         mutex1.release()
 
-        if ( length == 0):
+        if ( file.closed and ackRecv == segSent ):
             return None
 
         # listen for new packet
@@ -152,6 +157,7 @@ def listenForAck( sock ) -> None:
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
                     
                     cwnd.pop( i )
+                    ackRecv += 1
                     # release
                     break
             mutex1.release()
@@ -169,7 +175,7 @@ def sendFile( sock, addr, header, path ) -> bytes:
     # create threads
     nextSeg = threading.Thread( target = sendNextSegment, args = ( sock, addr, file, header, ) )
     lostSeg = threading.Thread( target = sendLostSegment, args = ( sock, addr, ) )
-    ackListener = threading.Thread( target = listenForAck, args = ( sock, ) )
+    ackListener = threading.Thread( target = listenForAck, args = ( sock, file ) )
     
     # start threads
     print( "Starting threads..." )
