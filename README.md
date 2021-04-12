@@ -8,7 +8,8 @@
 
 ## Protocol Design
 
-1. segment structure
+### Segment Structure
+
 ```
    0                   1                   2                   3
     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -26,12 +27,16 @@
    |                             data                              |
    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
-   Header format = "!HHIIHBx"
+
+   Header format for python struct "!HHIIHBx"
    Total Segment Size = 16 bytes (Header) + 1024 bytes (Payload)
 
-2. Pipelined Protocol
+### Three-way Handshaking
 
-   Go-Back N
+![handshaking](./README_src/handshaking.png)
+
+### Connection Management
+
 
 ## Plan
 
