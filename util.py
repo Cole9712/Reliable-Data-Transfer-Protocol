@@ -1,4 +1,4 @@
-import struct
+import struct, client
 
 # pack header into binary string
 def makeHeader( src, dest, seqN, ackN, window, asf ) -> bytes:
@@ -46,7 +46,8 @@ def unpackHeader(header):
     seqNum = struct.unpack('!I', header[4:8])[0]
     ackNum = struct.unpack('!I', header[8:12])[0]
     asfByte = struct.unpack('!B', header[14:15])[0]
+    window = struct.unpack('!H', header[12:14])
     ACK = int(format(asfByte, '08b')[0:1])
     SYN = int(format(asfByte, '08b')[1:2])
     FIN = int(format(asfByte, '08b')[2:3])
-    return source_port, dest_port, seqNum, ackNum, ACK, SYN, FIN
+    return source_port, dest_port, seqNum, ackNum, window, ACK, SYN, FIN

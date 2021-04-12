@@ -23,7 +23,7 @@ class RecvServer(object):
         self.sendSocket.sendto(packet, (remote_addr, self.remote_port))
         
     def rcvOneSegment(self, rcvData, remote_addr):
-        remote_port, local_port, seqNum, ackNum, ACK, SYN, FIN = unpackHeader(rcvData)
+        remote_port, local_port, seqNum, ackNum, _, ACK, SYN, FIN = unpackHeader(rcvData)
         payload = rcvData[16:]
 
 
