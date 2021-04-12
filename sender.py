@@ -126,7 +126,7 @@ def listenForAck( sock ) -> None:
 
 
 # sends file -> ( sent successful?, header )
-def sendFile( sock, addr, header, path ) -> tuple:
+def sendFile( sock, addr, header, path ) -> bytes:
     # open file
     file = open( path, "rb" )   # rb = read-only, binary
     
@@ -149,7 +149,7 @@ def sendFile( sock, addr, header, path ) -> tuple:
     
     seqN = util.getHeader( lastHeader, seqN = True )
     header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
-    return ( True, header )
+    return header
 
 
 # sends file
@@ -179,18 +179,19 @@ def send( addr, header, userCount, path ):
         
         # send file in truncks
         print( "Start sending file..." )
-        success, sucHeader = sendFile( sock, addr, header, path )
-        if( success ):
-            header = util.nextHeader( sucHeader, asf = "001" )
-            sock.sendto( header, addr )
-           
-            ack = "0"
-            start = time.time()
-            while( ack != "1" or time.time() - start > 2 ):
-                packet, addr = sock.recvfrom( 1024 )
-                ack = util.getHeader( packet[0:16], ack = True )
+        sucHeader = sendFile( sock, addr, header, path )
+        print( "All segment transmitted!" )
 
-            sock.close() 
+        # send fin bit to prompt to close
+        header = util.nextHeader( sucHeader, asf = "001" )
+        sock.sendto( header, addr )
+
+        ack = 0
+        start = time.time()
+        while( ack != 1 or time.time() - start > 2 ):
+            packet, addr = sock.recvfrom( 1024 )
+            ack = util.getHeader( packet[0:16], ack = True )
+        sock.close() 
 
 
 def main():
