@@ -105,7 +105,7 @@ def listenForAck( sock ) -> None:
         recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )        
         
         # is ack 
-        if( recvAck == "1" ):
+        if( recvAck == 1 ):
             # lock
             currentAckN = recvSeqN + 1
             
@@ -172,8 +172,9 @@ def send( addr, header, userCount, path ):
     packet, addr = sock.recvfrom( 1040 )
     recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )
     print( "seqN = " + str( recvSeqN ) + " ackN = " + str( recvAckN ) + " ack = " + str( recvAck ) )
+    print( "mySeqN" + str( seqN + 2 ) )
 
-    if( recvAckN == seqN + 2 and recvAck == "1" ):
+    if( recvAckN == seqN + 2 and recvAck == 1 ):
         print( "File size acknowledged" )
         # update window for recieving ack
         currentAckN = recvSeqN + 1
