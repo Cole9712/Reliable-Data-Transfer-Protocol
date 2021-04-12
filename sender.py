@@ -41,7 +41,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
         header = util.nextHeader( header, newAckN = currentAckN )
         cwnd.append( packet( header, segment ) )
         sock.sendto( header + segment, addr )
-        print( "First segment sent" )
+        print( "First segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
         return True
     else:
         file.close()
