@@ -37,7 +37,7 @@ def nextHeader( prev, newSeqN = 0, newAckN = 0, newWindow = 0, asf = "000" ) -> 
     return makeHeader( src, dest, seqN, ackN, window, asf )
 
 def packHeader(source_port, dest_port, seqNum, ackNum, window, ACK, SYN, FIN):
-    return struct.pack( "!HHIIHBx", source_port, dest_port, seqNum, ackNum, window, client.setASFbyte(ACK, SYN, FIN))
+    return struct.pack( "!HHIIHBx", source_port, dest_port, seqNum, ackNum, window, setASFbyte(ACK, SYN, FIN))
 
 # unpack header information according to protocol design in README.md
 def unpackHeader(header):
