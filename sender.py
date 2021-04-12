@@ -41,9 +41,11 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
         header = util.nextHeader( header, newAckN = currentAckN )
         cwnd.append( packet( header, segment ) )
         sock.sendto( header + segment, addr )
+        print( "First segment sent" )
         return True
     else:
         file.close()
+        print( "Error: No data read" )
         return False
 
 
@@ -64,6 +66,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             # release
             cwnd.append( packet( header, segment ) )
             sock.sendto( header + segment, addr )
+            print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
         else:
             file.close()
             # thread finished
@@ -79,6 +82,7 @@ def sendLostSegment( sock, addr ) -> None:
         if( time.time() - cwnd[0].timestamp > TIMEOUT ):
             newHeader = util.nextHeader( cwnd[0].header, newSeqN = cwnd[0].getSeqN(), newAckN = currentAckN )
             sock.sendto( newHeader + cwnd[0].data, addr )
+            print( "Lost segment sent with sequence number: " + str( util.getHeader( newHeader, seqN = True ) ) )
         # release
         time.sleep( 1 )
         # lock
@@ -104,6 +108,8 @@ def listenForAck( sock ) -> None:
         if( recvAck == "1" ):
             # lock
             currentAckN = recvSeqN + 1
+            
+            print( "Segment ACKed with sequence number: " + str( recvAckN - 1 ) )
 
             # discard acked packet from window
             for i in range( len( cwnd ) ):
@@ -131,6 +137,7 @@ def sendFile( sock, addr, header, path ) -> tuple:
         ackListener = threading.Thread( target = listenForAck, args = ( sock, ) )
         
         # start threads
+        print( "Starting threads..." )
         nextSeg.start()
         lostSeg.start()
         ackListener.start()
@@ -139,6 +146,7 @@ def sendFile( sock, addr, header, path ) -> tuple:
         nextSeg.join()
         lostSeg.join()
         ackListener.join()
+        print( "Threads finished" )
     
         seqN = util.getHeader( lastHeader, seqN = True )
         header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
@@ -158,17 +166,20 @@ def send( addr, header, userCount, path ):
     header = util.makeHeader( src + userCount, dest, seqN + 1, ackN, window + 1, int( "01000000", 2 ) )
     data = struct.pack( "!I", os.path.getsize( path ) )
     sock.sendto( header + data, addr )
+    print( "Initial packet with file size sent" )
 
     # receive ack from client with port switch
     packet, addr = sock.recvfrom( 1040 )
     recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )
 
     if( recvAckN == seqN + 2 and recvAck == "1" ):
+        print( "File size acknowledged" )
         # update window for recieving ack
         currentAckN = recvSeqN + 1
         header = util.nextHeader( header, newSeqN = seqN + 1, newAckN = currentAckN, newWindow = window + 2 )
         
         # send file in truncks
+        print( "Start sending file..." )
         success, sucHeader = sendFile( sock, addr, header, path )
         if( success ):
             header = util.nextHeader( sucHeader, asf = "001" )
