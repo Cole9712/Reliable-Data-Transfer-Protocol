@@ -36,8 +36,8 @@ class RecvServer(object):
             self.file = open(self.fileName, 'wb')
             self.nextSeq = seqNum
             self.nextSendSeq = ackNum
-            self.sendACK(remote_addr)
             self.nextSeq = seqNum + 1
+            self.sendACK(remote_addr)
 
         elif len(self.rcvBuffer) < self.bufferMaxSize and seqNum >= self.nextSeq:
             self.nextSendSeq = ackNum
