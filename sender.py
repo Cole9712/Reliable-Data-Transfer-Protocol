@@ -59,7 +59,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
 
 # send the next segment of file
 def sendNextSegment( sock, addr, file, header ) -> None:
-    global lastHeader
+    global lastHeadetr
     global currentAckN
     while( not file.closed ):
         segment = file.read( MSS )
@@ -72,12 +72,13 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             mutex1.acquire()
 
             length = len( cwnd )
-            window = cwnd[0].getSeqN()
-
+            if( length != 0 ):
+                window = cwnd[0].getSeqN()
+                
             mutex1.release()
             empty1.release()
 
-            if( length ):
+            if( length != 0 ):
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = window )
             else:
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = util.getHeader( header, seqN = True)[0] + 1 )
@@ -102,10 +103,11 @@ def sendLostSegment( sock, addr ) -> None:
     while True:
         mutex1.acquire()
         length = len( cwnd )
-        timestamp = cwnd[0].timestamp
-        lostHeader = cwnd[0].header
-        lostSeqN = cwnd[0].getSeqN()
-        lostData = cwnd[0].data
+        if( length != 0 ):
+            timestamp = cwnd[0].timestamp
+            lostHeader = cwnd[0].header
+            lostSeqN = cwnd[0].getSeqN()
+            lostData = cwnd[0].data
         mutex1.release()
 
         if( length == 0 ):
