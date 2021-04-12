@@ -155,7 +155,7 @@ def send( addr, header, userCount, path ):
     sock.bind( ( '', src + userCount  ) )
 
     # initial packet with file size
-    header = util.makeHeader( src + userCount, dest, seqN + 1, ackN, window + 1, int( "00000000", 2 ) )
+    header = util.makeHeader( src + userCount, dest, seqN + 1, ackN, window + 1, int( "01000000", 2 ) )
     data = struct.pack( "!I", os.path.getsize( path ) )
     sock.sendto( header + data, addr )
 
