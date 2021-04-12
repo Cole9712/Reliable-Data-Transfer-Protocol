@@ -19,7 +19,7 @@ class RecvServer(object):
         print('Local receiving server established, listening on %s' % self.remote_port)
 
     def sendACK(self, remote_addr):
-        packet = packHeader(0, self.remote_port, self.nextSendSeq, self.nextSeq, self.rwnd, self.ackBit, 0, self.finBit)
+        packet = packHeader(0, self.remote_port, self.nextSendSeq, self.nextSeq, self.rwnd, 1, 0, self.finBit)
         self.sendSocket.sendto(packet, remote_addr)
         
     def rcvOneSegment(self, rcvData, remote_addr):
@@ -58,7 +58,6 @@ class RecvServer(object):
             if FIN == 1:
                 self.finBit = 1
                 self.file.close()
-                self.ackBit = 1
                 self.transEnd = True
                 print('All packets received successfully. Closing Connection...')
                 self.sendACK(remote_addr)
@@ -96,7 +95,6 @@ class RecvServer(object):
         self.fileSize = 0
         self.packetCount = 0
         self.finBit = 0
-        self.ackBit = 0
 
         while not self.transEnd:
             recvData, addr = self.rcvSocket.recvfrom(segment_size)
