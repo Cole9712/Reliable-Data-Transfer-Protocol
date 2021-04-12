@@ -98,6 +98,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 # send a timeout segment of file
 def sendLostSegment( sock, addr ) -> None:
     global currentAckN
+    global TIMEOUT
     # cwnd not empty
     while True:
         mutex1.acquire()
@@ -123,9 +124,9 @@ def sendLostSegment( sock, addr ) -> None:
 
             newHeader = util.nextHeader( lostHeader, newSeqN = lostSeqN, newAckN = currentAckN )
             sock.sendto( newHeader + lostData, addr )
-            mutex1.acquire()
-            cwnd[0].timestamp = time.time()
-            mutex1.release()
+            # mutex1.acquire()
+            # cwnd[0].timestamp = time.time()
+            # mutex1.release()
             print( "Lost segment sent with sequence number: " + str( util.getHeader( newHeader, seqN = True ) ) )
         
         time.sleep( 1 )
@@ -173,8 +174,8 @@ def listenForAck( sock, file ) -> None:
                     break
             
             # congestion control, append Semaphore size by 1
-            if empty1._value < SEMA_MAX_SIZE-1:
-                empty1.release()
+            
+            
             mutex1.release()
             empty1.release()
 
