@@ -46,7 +46,7 @@ def connect( sock, userCount ):
                 header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
                 data = struct.pack( "!H", PORT + userCount )
                 sock.sendto( header + data, addr2 )
-                # sender.send( addr2, header, userCount, path )
+                sender.send( addr2, header, userCount, path )
             
             else:
                 print( "file not found :(" )
