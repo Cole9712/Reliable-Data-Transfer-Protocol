@@ -130,29 +130,26 @@ def sendFile( sock, addr, header, path ) -> tuple:
     # open file
     file = open( path, "rb" )   # rb = read-only, binary
     
-    if( sendFirstSegment( sock, addr, file, header ) ):
-        # create threads
-        nextSeg = threading.Thread( target = sendNextSegment, args = ( sock, addr, file, header, ) )
-        lostSeg = threading.Thread( target = sendLostSegment, args = ( sock, addr, ) )
-        ackListener = threading.Thread( target = listenForAck, args = ( sock, ) )
-        
-        # start threads
-        print( "Starting threads..." )
-        nextSeg.start()
-        lostSeg.start()
-        ackListener.start()
-
-        # threads finished
-        nextSeg.join()
-        lostSeg.join()
-        ackListener.join()
-        print( "Threads finished" )
+    # create threads
+    nextSeg = threading.Thread( target = sendNextSegment, args = ( sock, addr, file, header, ) )
+    lostSeg = threading.Thread( target = sendLostSegment, args = ( sock, addr, ) )
+    ackListener = threading.Thread( target = listenForAck, args = ( sock, ) )
     
-        seqN = util.getHeader( lastHeader, seqN = True )
-        header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
-        return ( True, header )
-    else:
-        return ( False, )
+    # start threads
+    print( "Starting threads..." )
+    nextSeg.start()
+    lostSeg.start()
+    ackListener.start()
+
+    # threads finished
+    nextSeg.join()
+    lostSeg.join()
+    ackListener.join()
+    print( "Threads finished" )
+    
+    seqN = util.getHeader( lastHeader, seqN = True )
+    header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
+    return ( True, header )
 
 
 # sends file
