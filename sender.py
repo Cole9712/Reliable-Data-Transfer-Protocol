@@ -51,6 +51,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
 
 # send the next segment of file
 def sendNextSegment( sock, addr, file, header ) -> None:
+    global lastHeader
     while( not file.closed ):
         segment = file.read( MSS )
 
@@ -70,6 +71,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
         else:
             file.close()
             # thread finished
+    print( header )
     lastHeader = header
 
 
@@ -146,8 +148,9 @@ def sendFile( sock, addr, header, path ) -> bytes:
     lostSeg.join()
     ackListener.join()
     print( "Threads finished" )
-    
-    seqN = util.getHeader( lastHeader, seqN = True )
+
+    print( lastHeader )
+    seqN = util.getHeader( lastHeader, seqN = True )[0]
     header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
     return header
 
