@@ -51,7 +51,8 @@ def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
 
     # Start transfer the file
     print("Starting tranfering file...")
-    # receiver.recvFile(dest_port, filePath)
+    s.close()
+    receiver.recvFile(source_Port, filePath)
 
 
 

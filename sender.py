@@ -150,7 +150,7 @@ def sendFile( sock, addr, header, path ) -> tuple:
 # sends file
 def send( addr, header, userCount, path ):
     time.sleep( 2 )
-    src, dest, seqN, ackN, window = struct.unpack( "!HHIIH", header )
+    src, dest, seqN, ackN, window, _, _, _ = util.unpackHeader(header)
     sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
     sock.bind( ( '', src + userCount  ) )
 
