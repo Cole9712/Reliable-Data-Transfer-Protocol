@@ -35,3 +35,18 @@ def nextHeader( prev, newSeqN = 0, newAckN = 0, newWindow = 0, asf = "000" ) -> 
     window = newWindow if newWindow != 0 else window
     asf = int( asf + "00000", 2 )
     return makeHeader( src, dest, seqN, ackN, window, asf )
+
+def packHeader(source_port, dest_port, seqNum, ackNum, window, ACK, SYN, FIN):
+    return struct.pack( "!HHIIHBx", source_port, dest_port, seqNum, ackNum, window, client.setASFbyte(ACK, SYN, FIN))
+
+# unpack header information according to protocol design in README.md
+def unpackHeader(header):
+    source_port = struct.unpack('!H', header[0:2])[0]
+    dest_port = struct.unpack('!H', header[2:4])[0]
+    seqNum = struct.unpack('!I', header[4:8])[0]
+    ackNum = struct.unpack('!I', header[8:12])[0]
+    asfByte = struct.unpack('!B', header[14:15])[0]
+    ACK = int(format(asfByte, '08b')[0:1])
+    SYN = int(format(asfByte, '08b')[1:2])
+    FIN = int(format(asfByte, '08b')[2:3])
+    return source_port, dest_port, seqNum, ackNum, ACK, SYN, FIN
