@@ -6,11 +6,14 @@ import util
 
 
 MSS = 1024
-TIMEOUT = 1     # !!! implement variation timeout later...
+
 SEMA_MAX_SIZE = 10
 
 ########## Variables ##########
 
+TIMEOUT = 1
+estimatedRTT = 1
+devRTT = 0
 segSent = 0
 ackRecv = 0
 currentAckN = 0     # acknowledge number to receiver
@@ -23,6 +26,7 @@ cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
 empty1 = threading.Semaphore(2)
+mutex2 = threading.Semaphore()
 
 ########## packet class for cwnd record ##########
 
@@ -77,10 +81,10 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             mutex1.release()
             full1.release()
             
-            tmp_timeout = 0.2
+            tmp_timeout = 0.01
             while remote_buffer_size <= 2048:
                 time.sleep(tmp_timeout)
-                tmp_timeout += 0.1
+                tmp_timeout += 0.01
             sock.sendto( header + segment, addr )
             print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
 
@@ -108,7 +112,15 @@ def sendLostSegment( sock, addr ) -> None:
         if( length == 0 ):
             return None
         # transmission timeout
-        if( time.time() - timestamp > TIMEOUT ):
+        mutex2.acquire()
+        TO = TIMEOUT
+        print("TIMEOUT with {0}".format(TO))
+        mutex2.release()
+
+        if( time.time() - timestamp > TO ):
+            # congestion control invoked by timeout, divide cwnd by 2
+            # empty1._value = int(empty1._value / 2)
+
             newHeader = util.nextHeader( lostHeader, newSeqN = lostSeqN, newAckN = currentAckN )
             sock.sendto( newHeader + lostData, addr )
             mutex1.acquire()
@@ -127,6 +139,9 @@ def listenForAck( sock, file ) -> None:
     global currentAckN
     global ackRecv
     global remote_buffer_size
+    global estimatedRTT
+    global devRTT
+    global TIMEOUT
     while True:
         print(1)
         mutex1.acquire()
@@ -151,17 +166,25 @@ def listenForAck( sock, file ) -> None:
             mutex1.acquire()
             for i in range( len( cwnd ) ):
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
+                    # calculate RTT
                     sampleRTT = time.time() - cwnd[i].timestamp
                     cwnd.pop( i )
                     ackRecv += 1
-                    # release
                     break
             
             # congestion control, append Semaphore size by 1
-            empty1.acquire()
-
+            if empty1._value < SEMA_MAX_SIZE-1:
+                empty1.release()
             mutex1.release()
             empty1.release()
+
+            estimatedRTT = 0.875*estimatedRTT + 0.125*sampleRTT
+            devRTT = 0.75*devRTT + 0.25*abs(sampleRTT - estimatedRTT)
+            # lock
+            mutex2.acquire()
+            TIMEOUT = estimatedRTT + 4*devRTT
+            mutex2.release()
+            
 
 
 ########## main functions ##########
