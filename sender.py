@@ -7,7 +7,7 @@ import util
 
 MSS = 1024
 TIMEOUT = 1     # !!! implement variation timeout later...
-
+SEMA_MAX_SIZE = 10
 
 ########## Variables ##########
 
@@ -22,7 +22,7 @@ remote_buffer_size = 4096
 cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
-empty1 = threading.Semaphore(6)
+empty1 = threading.Semaphore(2)
 
 ########## packet class for cwnd record ##########
 
@@ -111,6 +111,9 @@ def sendLostSegment( sock, addr ) -> None:
         if( time.time() - timestamp > TIMEOUT ):
             newHeader = util.nextHeader( lostHeader, newSeqN = lostSeqN, newAckN = currentAckN )
             sock.sendto( newHeader + lostData, addr )
+            mutex1.acquire()
+            cwnd[0].timestamp = time.time()
+            mutex1.release()
             print( "Lost segment sent with sequence number: " + str( util.getHeader( newHeader, seqN = True ) ) )
         
         time.sleep( 1 )
@@ -153,6 +156,10 @@ def listenForAck( sock, file ) -> None:
                     ackRecv += 1
                     # release
                     break
+            
+            # congestion control, append Semaphore size by 1
+            empty1.acquire()
+
             mutex1.release()
             empty1.release()
 

@@ -96,7 +96,7 @@ class RecvServer(object):
         self.fileName = fileName
         # Suppose max size buffer can handle is 8192 bytes = 8 segments
         self.bufferMaxSize = 8
-        self.rwnd = 8192
+        self.rwnd = 8192*2
         # rcvBuffer stores array of received in the format RecvObject
         self.rcvBuffer = []
         self.fileSize = 0
