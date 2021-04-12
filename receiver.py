@@ -83,6 +83,12 @@ class RecvServer(object):
             if len(self.rcvBuffer) == self.bufferMaxSize:
                 self.rcvBuffer.pop()
                 self.rwnd += 1024
+        elif seqNum < self.nextSeq:
+            tmp = self.nextSeq
+            self.nextSeq = seqNum + 1
+            self.sendACK(remote_addr)
+            self.nextSeq = tmp
+
 
 
     def recvOneFile(self, fileName):
