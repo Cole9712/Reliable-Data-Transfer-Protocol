@@ -20,7 +20,7 @@ class RecvServer(object):
 
     def sendACK(self, remote_addr):
         packet = packHeader(0, self.remote_port, self.nextSendSeq, self.nextSeq, self.rwnd, self.ackBit, 0, self.finBit)
-        self.sendSocket.sendto(packet, (remote_addr, self.remote_port))
+        self.sendSocket.sendto(packet, remote_addr)
         
     def rcvOneSegment(self, rcvData, remote_addr):
         remote_port, local_port, seqNum, ackNum, _, ACK, SYN, FIN = unpackHeader(rcvData)
