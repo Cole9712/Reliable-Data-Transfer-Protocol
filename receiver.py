@@ -14,17 +14,17 @@ class RecvServer(object):
         self.remote_port = remote_port
         self.rcvSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.rcvSocket.bind(('', remote_port))
-        self.sendSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         print('Local receiving server established, listening on %s' % self.remote_port)
 
     def sendACK(self, remote_addr):
         packet = packHeader(0, self.remote_port, self.nextSendSeq, self.nextSeq, self.rwnd, 1, 0, self.finBit)
-        self.sendSocket.sendto(packet, remote_addr)
+        self.rcvSocket.sendto(packet, remote_addr)
         
     def rcvOneSegment(self, rcvData, remote_addr):
         remote_port, local_port, seqNum, ackNum, _, ACK, SYN, FIN = unpackHeader(rcvData)
         payload = rcvData[16:]
+        print('Received segment with seqNum {0}'.format(seqNum))
 
 
         # check if first segment
@@ -40,6 +40,7 @@ class RecvServer(object):
             self.sendACK(remote_addr)
 
         elif len(self.rcvBuffer) < self.bufferMaxSize and seqNum >= self.nextSeq:
+            
             self.nextSendSeq = ackNum
             # locate the recvData's position in buffer
             i = 0
