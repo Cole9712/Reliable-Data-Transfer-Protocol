@@ -29,7 +29,8 @@ class RecvServer(object):
 
         # check if first segment
         if SYN == 1:
-            self.fileSize = payload.decode()
+            size = struct.unpack('!I', payload)[0]
+            self.fileSize = size
             fileSizeInMb = self.fileSize / 1048576
             print('Start to receive file: {0} with size {1} MB from {2}'.format(self.fileName, fileSizeInMb, remote_addr))
             self.file = open(self.fileName, 'wb')
