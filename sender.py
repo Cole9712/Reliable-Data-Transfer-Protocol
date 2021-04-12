@@ -18,16 +18,13 @@ lastHeader = None   # reserved for header of the last segment
 
 ########## these need to be locked ##########
 
-localWindowSize = 6
-cwndSize = 6
+remote_buffer_size = 4096
 cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
 empty1 = threading.Semaphore(6)
 
 ########## packet class for cwnd record ##########
-
-
 
 class packet:
     def __init__( self, header, data ) -> None:
@@ -70,17 +67,8 @@ def sendNextSegment( sock, addr, file, header ) -> None:
         if( len( segment ) != 0 ):
             
             # lock
-            mutex1.acquire()
-            length = len( cwnd )
-            if( length != 0 ):
-                window = cwnd[0].getSeqN()
-                
-            mutex1.release()
 
-            if( length != 0 ):
-                header = util.nextHeader( header, newAckN = currentAckN, newWindow = window )
-            else:
-                header = util.nextHeader( header, newAckN = currentAckN, newWindow = util.getHeader( header, seqN = True)[0] + 1 )
+            header = util.nextHeader( header, newAckN = currentAckN)
             
             empty1.acquire()
             mutex1.acquire()
@@ -88,7 +76,11 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             segSent += 1
             mutex1.release()
             full1.release()
-
+            
+            tmp_timeout = 0.2
+            while remote_buffer_size <= 2048:
+                time.sleep(tmp_timeout)
+                tmp_timeout += 0.1
             sock.sendto( header + segment, addr )
             print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
 
@@ -131,6 +123,7 @@ def sendLostSegment( sock, addr ) -> None:
 def listenForAck( sock, file ) -> None:
     global currentAckN
     global ackRecv
+    global remote_buffer_size
     while True:
         print(1)
         mutex1.acquire()
@@ -142,7 +135,7 @@ def listenForAck( sock, file ) -> None:
 
         # listen for new packet
         packet, addr = sock.recvfrom( 1040 )
-        recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )        
+        recvSeqN, recvAckN, remote_buffer_size, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, window = True, ack = True )        
         
         # is ack 
         if( recvAck == 1 ):
@@ -191,7 +184,7 @@ def sendFile( sock, addr, header, path ) -> bytes:
 
     print( lastHeader )
     seqN = util.getHeader( lastHeader, seqN = True )[0]
-    header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN, newWindow = util.getHeader( lastHeader, seqN = True )[0] + 1 )
+    header = util.nextHeader( lastHeader, newSeqN = seqN, newAckN = currentAckN)
     return header
 
 
@@ -218,7 +211,7 @@ def send( addr, header, userCount, path ):
         print( "File size acknowledged" )
         # update window for recieving ack
         currentAckN = recvSeqN + 1
-        header = util.nextHeader( header, newSeqN = seqN + 1, newAckN = currentAckN, newWindow = window + 2 )
+        header = util.nextHeader( header, newSeqN = seqN + 1, newAckN = currentAckN)
         
         # send file in truncks
         print( "Start sending file..." )
