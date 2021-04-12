@@ -151,7 +151,7 @@ def listenForAck( sock, file ) -> None:
             mutex1.acquire()
             for i in range( len( cwnd ) ):
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
-                    
+                    sampleRTT = time.time() - cwnd[i].timestamp
                     cwnd.pop( i )
                     ackRecv += 1
                     # release
