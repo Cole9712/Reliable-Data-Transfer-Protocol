@@ -8,10 +8,7 @@ def makeHeader( src, dest, seqN, ackN, window, asf ) -> bytes:
 # receive specific elements from the header
 def getHeader( header, src = False, dest = False, seqN = False, ackN = False,
         window = False, ack = False, syn = False, fin = False ) -> tuple:
-    hsrc, hdest, hseqN, hackN, hwindow, hasf = struct.unpack( "!HHIIHBx", header )
-    hack = format( hasf, '08b' )[0]
-    hsyn = format( hasf, '08b' )[1]
-    hfin = format( hasf, '08b' )[2]
+    hsrc, hdest, hseqN, hackN, hwindow, hack, hsyn, hfin = unpackHeader( header )
 
     res = tuple()
     
@@ -29,7 +26,7 @@ def getHeader( header, src = False, dest = False, seqN = False, ackN = False,
 
 # prepares next packet's header
 def nextHeader( prev, newSeqN = 0, newAckN = 0, newWindow = 0, asf = "000" ) -> bytes:
-    src, dest, seqN, ackN, window = struct.unpack( "!HHIIH", prev )
+    src, dest, seqN, ackN, window, ack, syn, fin = unpackHeader( prev )
     seqN = newSeqN if newSeqN != 0 else seqN + 1
     ackN = newAckN if newAckN != 0 else ackN
     window = newWindow if newWindow != 0 else window

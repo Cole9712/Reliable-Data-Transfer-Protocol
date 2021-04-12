@@ -171,6 +171,7 @@ def send( addr, header, userCount, path ):
     # receive ack from client with port switch
     packet, addr = sock.recvfrom( 1040 )
     recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )
+    print( "seqN = " + str( recvSeqN ) + " ackN = " + str( recvAckN ) + " ack = " + str( recvAck ) )
 
     if( recvAckN == seqN + 2 and recvAck == "1" ):
         print( "File size acknowledged" )
