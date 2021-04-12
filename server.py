@@ -1,4 +1,4 @@
-import socket, struct, random, sys, os
+import socket, struct, random, sys, os, threading
 import sender
 
 PORT = 6666
@@ -46,7 +46,7 @@ def connect( sock, userCount ):
                 header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
                 data = struct.pack( "!H", PORT + userCount )
                 sock.sendto( header + data, addr2 )
-                sender.send( addr2, header, userCount, path )
+                threading.Thread( target = sender.send, args = ( addr2, header, userCount, path, ) ).start()
             
             else:
                 print( "file not found :(" )

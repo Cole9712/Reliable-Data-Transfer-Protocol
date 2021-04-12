@@ -8,6 +8,7 @@ import util
 MSS = 1024
 TIMEOUT = 1     # !!! implement variation timeout later...
 
+
 ########## Variables ##########
 
 currentAckN = 0     # acknowledge number to receiver
@@ -47,7 +48,6 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
     if( len( segment ) != 0 ):
         header = util.nextHeader( header, newAckN = currentAckN )
         cwnd.append( packet( header, segment ) )
-        cwndSize += 1
         sock.sendto( header + segment, addr )
         print( "First segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
         return True
@@ -60,30 +60,35 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
 # send the next segment of file
 def sendNextSegment( sock, addr, file, header ) -> None:
     global lastHeader
+    global currentAckN
     while( not file.closed ):
         segment = file.read( MSS )
 
         # file not empty
         if( len( segment ) != 0 ):
-
-            # cwnd not empty
+            
             # lock
             empty1.acquire()
             mutex1.acquire()
-            if( len( cwnd ) != 0 ):
-                header = util.nextHeader( header, newAckN = currentAckN, newWindow = cwnd[0].getSeqN() )
+
+            length = len( cwnd )
+            window = cwnd[0].getSeqN()
+
+            mutex1.release()
+            empty1.release()
+
+            if( length ):
+                header = util.nextHeader( header, newAckN = currentAckN, newWindow = window )
             else:
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = util.getHeader( header, seqN = True)[0] + 1 )
             
+            full1.acquire()
             cwnd.append( packet( header, segment ) )
-            mutex2.acquire()
-            cwndSize += 1
-            mutex2.release()
-            # release
-            mutex1.release()
             full1.release()
+
             sock.sendto( header + segment, addr )
             print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
+
         else:
             file.close()
             # thread finished
@@ -95,16 +100,22 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 def sendLostSegment( sock, addr ) -> None:
     # cwnd not empty
     while True:
-        mutex1.acquire() 
-        if (len( cwnd ) == 0):
+        mutex1.acquire()
+        length = len( cwnd )
+        timestamp = cwnd[0].timestamp
+        lostHeader = cwnd[0].header
+        lostSeqN = cwnd[0].getSeqN()
+        lostData = cwnd[0].data
+        mutex1.release()
+
+        if( length == 0 ):
             return None
         # transmission timeout
-        if( time.time() - cwnd[0].timestamp > TIMEOUT ):
-            newHeader = util.nextHeader( cwnd[0].header, newSeqN = cwnd[0].getSeqN(), newAckN = currentAckN )
-            sock.sendto( newHeader + cwnd[0].data, addr )
+        if( time.time() - timestamp > TIMEOUT ):
+            newHeader = util.nextHeader( lostHeader, newSeqN = lostSeqN, newAckN = currentAckN )
+            sock.sendto( newHeader + lostData, addr )
             print( "Lost segment sent with sequence number: " + str( util.getHeader( newHeader, seqN = True ) ) )
-        mutex1.release()
-        # release
+        
         time.sleep( 1 )
 
 
@@ -113,12 +124,13 @@ def sendLostSegment( sock, addr ) -> None:
 
 # listen for incoming ack
 def listenForAck( sock ) -> None:
-    # cwnd not empty
-
+    global currentAckN
     while True:
-        full1.acquire()
         mutex1.acquire()
-        if (len( cwnd ) == 0):
+        length = len( cwnd )
+        mutex1.release()
+
+        if ( length == 0):
             return None
 
         # listen for new packet
@@ -133,17 +145,14 @@ def listenForAck( sock ) -> None:
             print( "Segment ACKed with sequence number: " + str( recvAckN - 1 ) )
 
             # discard acked packet from window
-
+            
+            full1.acquire()
             for i in range( len( cwnd ) ):
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
                     cwnd.pop( i )
                     # release
                     break
-        mutex1.release()
-        empty1.release()
-
-    # release
-    return None
+            full1.release()
 
 
 ########## main functions ##########
