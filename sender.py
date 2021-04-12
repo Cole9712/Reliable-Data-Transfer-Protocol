@@ -8,16 +8,23 @@ import util
 MSS = 1024
 TIMEOUT = 1     # !!! implement variation timeout later...
 
+########## Variables ##########
+
+currentAckN = 0     # acknowledge number to receiver
+lastHeader = None   # reserved for header of the last segment
 
 ########## these need to be locked ##########
 
-
+localWindowSize = 6
+cwndSize = 6
 cwnd = []           # sender window
-currentAckN = 0     # acknowledge number to receiver
-lastHeader = None   # reserved for header of the last segment 
-
+mutex1 = threading.Semaphore(1)
+full1 = threading.Semaphore(0)
+empty1 = threading.Semaphore(6)
+mutex2 = threading.Semaphore()
 
 ########## packet class for cwnd record ##########
+
 
 
 class packet:
@@ -40,6 +47,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
     if( len( segment ) != 0 ):
         header = util.nextHeader( header, newAckN = currentAckN )
         cwnd.append( packet( header, segment ) )
+        cwndSize += 1
         sock.sendto( header + segment, addr )
         print( "First segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
         return True
@@ -60,12 +68,20 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 
             # cwnd not empty
             # lock
+            empty1.acquire()
+            mutex1.acquire()
             if( len( cwnd ) != 0 ):
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = cwnd[0].getSeqN() )
             else:
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = util.getHeader( header, seqN = True)[0] + 1 )
-            # release
+            
             cwnd.append( packet( header, segment ) )
+            mutex2.acquire()
+            cwndSize += 1
+            mutex2.release()
+            # release
+            mutex1.release()
+            full1.release()
             sock.sendto( header + segment, addr )
             print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
         else:
@@ -78,19 +94,18 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 # send a timeout segment of file
 def sendLostSegment( sock, addr ) -> None:
     # cwnd not empty
-    # lock
-    while( len( cwnd ) != 0 ):
+    while True:
+        mutex1.acquire() 
+        if (len( cwnd ) == 0):
+            return None
         # transmission timeout
         if( time.time() - cwnd[0].timestamp > TIMEOUT ):
             newHeader = util.nextHeader( cwnd[0].header, newSeqN = cwnd[0].getSeqN(), newAckN = currentAckN )
             sock.sendto( newHeader + cwnd[0].data, addr )
             print( "Lost segment sent with sequence number: " + str( util.getHeader( newHeader, seqN = True ) ) )
+        mutex1.release()
         # release
         time.sleep( 1 )
-        # lock
-
-    # release
-    return None
 
 
 ########## ack listener ##########
@@ -99,9 +114,13 @@ def sendLostSegment( sock, addr ) -> None:
 # listen for incoming ack
 def listenForAck( sock ) -> None:
     # cwnd not empty
-    # lock
-    while( len( cwnd ) != 0 ):
-        # release
+
+    while True:
+        full1.acquire()
+        mutex1.acquire()
+        if (len( cwnd ) == 0):
+            return None
+
         # listen for new packet
         packet, addr = sock.recvfrom( 1040 )
         recvSeqN, recvAckN, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, ack = True )        
@@ -114,11 +133,14 @@ def listenForAck( sock ) -> None:
             print( "Segment ACKed with sequence number: " + str( recvAckN - 1 ) )
 
             # discard acked packet from window
+
             for i in range( len( cwnd ) ):
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
                     cwnd.pop( i )
                     # release
                     break
+        mutex1.release()
+        empty1.release()
 
     # release
     return None
