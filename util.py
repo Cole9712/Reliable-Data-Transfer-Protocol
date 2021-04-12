@@ -1,4 +1,4 @@
-import struct, client
+import struct
 
 # pack header into binary string
 def makeHeader( src, dest, seqN, ackN, window, asf ) -> bytes:
@@ -51,3 +51,8 @@ def unpackHeader(header):
     SYN = int(format(asfByte, '08b')[1:2])
     FIN = int(format(asfByte, '08b')[2:3])
     return source_port, dest_port, seqNum, ackNum, window, ACK, SYN, FIN
+
+def setASFbyte(ack=0,syn=0,fin=0):
+    # convert int to string and conbine
+    byte = str(ack)+str(syn)+str(fin)+('00000')
+    return int(byte, 2)

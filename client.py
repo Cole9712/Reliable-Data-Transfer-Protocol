@@ -1,12 +1,8 @@
 import socket, os, sys, struct, receiver
+from util import setASFbyte
 
 seqNum = 0
 source_Port = 9009
-
-def setASFbyte(ack=0,syn=0,fin=0):
-    # convert int to string and conbine
-    byte = str(ack)+str(syn)+str(fin)+('00000')
-    return int(byte, 2)
 
 def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
 
