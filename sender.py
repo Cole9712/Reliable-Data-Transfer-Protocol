@@ -22,7 +22,6 @@ cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
 empty1 = threading.Semaphore(6)
-mutex2 = threading.Semaphore()
 
 ########## packet class for cwnd record ##########
 
@@ -59,7 +58,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
 
 # send the next segment of file
 def sendNextSegment( sock, addr, file, header ) -> None:
-    global lastHeadetr
+    global lastHeader
     global currentAckN
     while( not file.closed ):
         segment = file.read( MSS )
@@ -68,23 +67,22 @@ def sendNextSegment( sock, addr, file, header ) -> None:
         if( len( segment ) != 0 ):
             
             # lock
-            empty1.acquire()
             mutex1.acquire()
-
             length = len( cwnd )
             if( length != 0 ):
                 window = cwnd[0].getSeqN()
                 
             mutex1.release()
-            empty1.release()
 
             if( length != 0 ):
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = window )
             else:
                 header = util.nextHeader( header, newAckN = currentAckN, newWindow = util.getHeader( header, seqN = True)[0] + 1 )
             
-            full1.acquire()
+            empty1.acquire()
+            mutex1.acquire()
             cwnd.append( packet( header, segment ) )
+            mutex1.release()
             full1.release()
 
             sock.sendto( header + segment, addr )
@@ -99,6 +97,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 
 # send a timeout segment of file
 def sendLostSegment( sock, addr ) -> None:
+    global currentAckN
     # cwnd not empty
     while True:
         mutex1.acquire()
@@ -128,6 +127,7 @@ def sendLostSegment( sock, addr ) -> None:
 def listenForAck( sock ) -> None:
     global currentAckN
     while True:
+        print(1)
         mutex1.acquire()
         length = len( cwnd )
         mutex1.release()
@@ -141,20 +141,21 @@ def listenForAck( sock ) -> None:
         
         # is ack 
         if( recvAck == 1 ):
-            # lock
             currentAckN = recvSeqN + 1
             
             print( "Segment ACKed with sequence number: " + str( recvAckN - 1 ) )
 
             # discard acked packet from window
-            
             full1.acquire()
+            mutex1.acquire()
             for i in range( len( cwnd ) ):
                 if( cwnd[i].getSeqN() == recvAckN - 1 ):
+                    
                     cwnd.pop( i )
                     # release
                     break
-            full1.release()
+            mutex1.release()
+            empty1.release()
 
 
 ########## main functions ##########
@@ -224,10 +225,10 @@ def send( addr, header, userCount, path ):
 
         ack = 0
         start = time.time()
-        while( ack != 1 or time.time() - start > 2 ):
+        while( ack == 1 or time.time() - start > 2 ):
             packet, addr = sock.recvfrom( 1024 )
             ack = util.getHeader( packet[0:16], ack = True )
-        sock.close() 
+        sock.close()
 
 
 def main():

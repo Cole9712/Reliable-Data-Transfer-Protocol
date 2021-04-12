@@ -34,7 +34,6 @@ class RecvServer(object):
             fileSizeInMb = self.fileSize / 1048576
             print('Start to receive file: {0} with size {1} MB from {2}'.format(self.fileName, fileSizeInMb, remote_addr))
             self.file = open(self.fileName, 'wb')
-            self.nextSeq = seqNum
             self.nextSendSeq = ackNum
             self.nextSeq = seqNum + 1
             self.sendACK(remote_addr)
@@ -68,8 +67,8 @@ class RecvServer(object):
             while j< len(self.rcvBuffer) and self.rcvBuffer[j].seqNum == self.nextSeq:
                 
                 self.rwnd += 1024
-                self.sendACK(remote_addr)
                 self.nextSeq += 1
+                self.sendACK(remote_addr)
                 self.file.write(self.rcvBuffer[j].data)
                 self.packetCount += 1
                 print('Writting packet No.{0} into destination file'.format(self.packetCount))
@@ -86,6 +85,7 @@ class RecvServer(object):
         elif seqNum < self.nextSeq:
             tmp = self.nextSeq
             self.nextSeq = seqNum + 1
+            print('Sent old ACK with ackNum {0}'.format(self.nextSeq))
             self.sendACK(remote_addr)
             self.nextSeq = tmp
 

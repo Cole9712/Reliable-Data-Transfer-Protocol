@@ -2,10 +2,11 @@ import socket, struct, random, sys, os, threading
 import sender
 
 PORT = 6666
-
+userCount = 0
 
 # connect with client
-def connect( sock, userCount ): 
+def connect( sock): 
+    global userCount
     packet, addr1 = sock.recvfrom( 1040 )
     syn = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[1]
     print( "Establishing connection with " + str( addr1 ) )
@@ -47,6 +48,7 @@ def connect( sock, userCount ):
                 data = struct.pack( "!H", PORT + userCount )
                 sock.sendto( header + data, addr2 )
                 threading.Thread( target = sender.send, args = ( addr2, header, userCount, path, ) ).start()
+                userCount -= 1
             
             else:
                 print( "file not found :(" )
@@ -89,9 +91,9 @@ def listenOn():
     sock.bind( ( '', PORT ) )
     print( "Listening on " + str( PORT )  )
     
-    userCount = 0
+    global userCount
     while 1:
-        connect( sock, userCount )
+        connect( sock)
         
         
 def main():
