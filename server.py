@@ -16,7 +16,7 @@ def connect( sock, userCount ):
         dest = struct.unpack( "!H", packet[0:2] )[0]
         seqN = random.randint( 0, 9999 )
         ackN = struct.unpack( "!I", packet[4:8] )[0] + 1
-        window = 0
+        window = seqN
         asf = int( '11000000', 2 )      # ack, syn, fin
         
         header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
