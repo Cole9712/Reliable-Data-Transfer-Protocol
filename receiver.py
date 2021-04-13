@@ -71,7 +71,7 @@ class RecvServer(object):
                 self.sendACK(remote_addr)
                 self.file.write(self.rcvBuffer[j].data)
                 self.packetCount += 1
-                print('Writting packet No.{0}, seqNum {1} into destination file'.format(self.packetCount, seqNum))
+                print('Writing packet No.{0}, seqNum {1} into destination file'.format(self.packetCount, seqNum))
             
                 j += 1
 

@@ -84,13 +84,13 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             
             # print(remote_buffer_size)
 
-            while remote_buffer_size <= 10240:
-                print('remote buffer size about to overflow, flow control involved, remote buffer size=' + str( remote_buffer_size ))
-                time.sleep(1.5)
+            while remote_buffer_size <= 6144:
+                print('remote buffer size about to overflow, flow control involved, remote buffer free size=' + str( remote_buffer_size ))
+                time.sleep(estimatedRTT)
 
             while localWindow < len(cwnd):
                 print('congestion control involved')
-                time.sleep(0.5)
+                time.sleep(estimatedRTT)
             sock.sendto( header + segment, addr )
             # print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
 
@@ -203,7 +203,7 @@ def listenForAck( sock, file ) -> None:
                 mutex1.release()
                 empty1.release()
                 # congestion control, append window size by 1
-                if localWindow < WINDOW_MAX_SIZE:
+                if localWindow < WINDOW_MAX_SIZE and j==0:
                     mutex3.acquire()
                     localWindow += 1
                     mutex3.release()
