@@ -57,7 +57,7 @@ def sendFirstSegment( sock, addr, file, header ) -> bool:
         return True
     else:
         file.close()
-        print( "Error: No data read" )
+        print( "Error: No data read")
         return False
 
 
@@ -85,7 +85,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             # print(remote_buffer_size)
 
             while remote_buffer_size <= 10240:
-                print('remote buffer size about to overflow, flow control involved')
+                print('remote buffer size about to overflow, flow control involved, remote buffer size=' + str( remote_buffer_size ))
                 time.sleep(1.5)
 
             while localWindow < len(cwnd):
