@@ -14,7 +14,6 @@ def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
     try:
         s.bind(('', source_Port))
     except socket.error as msg:
-        a = msg
         # print('port binding error: %s' % msg)
 
     packet = struct.pack('!HHIIHBx', source_Port, dest_port, seqNum, 0, 0, setASFbyte(0,1,0))
