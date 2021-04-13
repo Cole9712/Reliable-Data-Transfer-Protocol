@@ -1,7 +1,7 @@
 import socket, struct, random, sys, os, threading
-import sender
+import senderNoPrint
 
-PORT = 6666
+PORT = 8888
 userCount = 0
 
 # connect with client
@@ -9,7 +9,7 @@ def connect( sock):
     global userCount
     packet, addr1 = sock.recvfrom( 1040 )
     syn = format( struct.unpack( "!B", packet[14:15] )[0], '08b' )[1]
-    print( "Establishing connection with " + str( addr1 ) )
+    # print( "Establishing connection with " + str( addr1 ) )
    
     # client asks for connection
     if( syn == '1' ):
@@ -23,7 +23,7 @@ def connect( sock):
         header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
         sock.sendto( header, addr1 )
         userCount += 1
-        print( "Acknowledgement sent to " + str( addr1 ) )
+        # print( "Acknowledgement sent to " + str( addr1 ) )
 
         packet, addr2 = sock.recvfrom( 1040 )
         ackN = struct.unpack( "!I", packet[8:12] )[0]
@@ -36,7 +36,7 @@ def connect( sock):
 
             # file exist?
             if( os.path.isfile( path ) ):
-                print( "file found :) " )
+                # print( "file found :) " )
                 src = PORT
                 dest = struct.unpack( "!H", packet[0:2] )[0]
                 seqN += 1
@@ -47,11 +47,11 @@ def connect( sock):
                 header = struct.pack( "!HHIIHBx", src, dest, seqN, ackN, window, asf )
                 data = struct.pack( "!H", PORT + userCount )
                 sock.sendto( header + data, addr2 )
-                threading.Thread( target = sender.send, args = ( addr2, header, userCount, path, ) ).start()
+                threading.Thread( target = senderNoPrint.send, args = ( addr2, header, userCount, path, ) ).start()
                 # userCount -= 1
             
             else:
-                print( "file not found :(" )
+                # print( "file not found :(" )
                 src = PORT
                 dest = struct.unpack( "!H", packet[0:2] )[0]
                 seqN += 1
@@ -89,7 +89,7 @@ def connect( sock):
 def listenOn():
     sock = socket.socket( socket.AF_INET, socket.SOCK_DGRAM )
     sock.bind( ( '', PORT ) )
-    print( "Listening on " + str( PORT )  )
+    # print( "Listening on " + str( PORT )  )
     
     global userCount
     while 1:
@@ -100,8 +100,8 @@ def main():
     try:
         listenOn()
     except KeyboardInterrupt:
-        print( "\nThank you for using Coss Transport." )
-        print( "Exiting..." )
+        # print( "\nThank you for using Coss Transport." )
+        # print( "Exiting..." )
         sys.exit( 0 )
 
 if __name__ == "__main__":
