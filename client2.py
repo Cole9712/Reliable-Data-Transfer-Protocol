@@ -2,7 +2,7 @@ import socket, os, sys, struct, receiver
 from util import setASFbyte
 
 seqNum = 0
-source_Port = 9010
+source_Port = 9009
 
 def main(cmd, dest_ip, dest_port, filePath, seqNum = 0):
 
