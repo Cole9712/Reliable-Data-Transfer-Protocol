@@ -104,9 +104,6 @@ def sendLostSegment( sock, addr, file ) -> None:
     # cwnd not empty
     while True:
         flag = False
-        if file.closed and length == 0 :
-            print('lost thread closed')
-            return None
 
         # transmission timeout
         mutex2.acquire()
@@ -115,6 +112,9 @@ def sendLostSegment( sock, addr, file ) -> None:
 
         mutex1.acquire()
         length = len( cwnd )
+        if file.closed and length == 0 :
+            print('lost thread closed')
+            return None
         if( length > 0 ):
             timestamp = cwnd[0].timestamp
             lostHeader = cwnd[0].header
