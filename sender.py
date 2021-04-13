@@ -7,7 +7,7 @@ import util
 
 MSS = 1024
 
-SEMA_MAX_SIZE = 10
+SEMA_MAX_SIZE = 14
 
 ########## Variables ##########
 
@@ -21,11 +21,11 @@ lastHeader = None   # reserved for header of the last segment
 
 ########## these need to be locked ##########
 
-remote_buffer_size = 4096
+remote_buffer_size = 16*1024
 cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
-empty1 = threading.Semaphore(2)
+empty1 = threading.Semaphore(5)
 mutex2 = threading.Semaphore()
 
 ########## packet class for cwnd record ##########
