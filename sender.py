@@ -7,7 +7,7 @@ import util
 
 MSS = 1024
 
-SEMA_MAX_SIZE = 14
+WINDOW_MAX_SIZE = 15
 
 ########## Variables ##########
 
@@ -25,9 +25,10 @@ remote_buffer_size = 16*1024
 cwnd = []           # sender window
 mutex1 = threading.Semaphore(1)
 full1 = threading.Semaphore(0)
-empty1 = threading.Semaphore(5)
+empty1 = threading.Semaphore(15)
 mutex2 = threading.Semaphore()
-
+mutex3 = threading.Semaphore()
+localWindow = 2
 
 ########## packet class for cwnd record ##########
 
@@ -81,14 +82,17 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             mutex1.release()
             full1.release()
             
-            tmp_timeout = 0.01
+            # print(remote_buffer_size)
+
             while remote_buffer_size <= 10240:
                 print('remote buffer size about to overflow, flow control involved')
-                time.sleep(5)
-                time.sleep(tmp_timeout)
-                tmp_timeout += 0.01
+                time.sleep(1.5)
+
+            while localWindow < len(cwnd):
+                print('congestion control involved')
+                time.sleep(0.5)
             sock.sendto( header + segment, addr )
-            print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
+            # print( "Segment sent with sequence number: " + str( util.getHeader( header, seqN = True ) ) )
 
         else:
             file.close()
@@ -101,6 +105,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 def sendLostSegment( sock, addr, file ) -> None:
     global currentAckN
     global TIMEOUT
+    global localWindow
     # cwnd not empty
     while True:
         flag = False
@@ -125,9 +130,13 @@ def sendLostSegment( sock, addr, file ) -> None:
                 cwnd[0].timestamp = time.time()
                 mutex1.release()
                 flag = True
+                mutex3.acquire()
+                localWindow = localWindow/2
+                mutex3.release()
             else:
                 mutex1.release()
-                time.sleep(diffTime)
+                # time.sleep(TO - diffTime)
+                time.sleep(0.3)
                 continue
         else:
             mutex1.release()
@@ -157,13 +166,13 @@ def listenForAck( sock, file ) -> None:
     global devRTT
     global TIMEOUT
     global cwnd
+    global localWindow
     while True:
 
         if ( file.closed and ackRecv == segSent ):
             return None
 
         # listen for new packet
-        # print('1')
         packet, addr = sock.recvfrom( 1040 )
         recvSeqN, recvAckN, remote_buffer_size, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, window = True, ack = True )        
         
@@ -193,8 +202,12 @@ def listenForAck( sock, file ) -> None:
                 cwnd.pop( j )
                 mutex1.release()
                 empty1.release()
-            # congestion control, append Semaphore size by 1
-
+                # congestion control, append window size by 1
+                if localWindow < WINDOW_MAX_SIZE:
+                    mutex3.acquire()
+                    localWindow += 1
+                    mutex3.release()
+                
             estimatedRTT = 0.875*estimatedRTT + 0.125*sampleRTT
             devRTT = 0.75*devRTT + 0.25*abs(sampleRTT - estimatedRTT)
             # lock
