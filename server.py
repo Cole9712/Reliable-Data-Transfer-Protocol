@@ -48,7 +48,7 @@ def connect( sock):
                 data = struct.pack( "!H", PORT + userCount )
                 sock.sendto( header + data, addr2 )
                 threading.Thread( target = sender.send, args = ( addr2, header, userCount, path, ) ).start()
-                userCount -= 1
+                # userCount -= 1
             
             else:
                 print( "file not found :(" )
