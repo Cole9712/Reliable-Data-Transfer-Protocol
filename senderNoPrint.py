@@ -28,6 +28,7 @@ full1 = threading.Semaphore(0)
 empty1 = threading.Semaphore(5)
 mutex2 = threading.Semaphore()
 
+
 ########## packet class for cwnd record ##########
 
 class packet:
@@ -70,9 +71,7 @@ def sendNextSegment( sock, addr, file, header ) -> None:
 
         # file not empty
         if( len( segment ) != 0 ):
-            
             # lock
-
             header = util.nextHeader( header, newAckN = currentAckN)
             
             empty1.acquire()
@@ -83,7 +82,9 @@ def sendNextSegment( sock, addr, file, header ) -> None:
             full1.release()
             
             tmp_timeout = 0.01
-            while remote_buffer_size <= 2048:
+            while remote_buffer_size <= 10240:
+                # print('remote buffer size about to overflow, flow control involved')
+                time.sleep(5)
                 time.sleep(tmp_timeout)
                 tmp_timeout += 0.01
             sock.sendto( header + segment, addr )
@@ -103,9 +104,6 @@ def sendLostSegment( sock, addr, file ) -> None:
     # cwnd not empty
     while True:
         flag = False
-        if file.closed and length == 0 :
-            # print('lost thread closed')
-            return None
 
         # transmission timeout
         mutex2.acquire()
@@ -114,6 +112,9 @@ def sendLostSegment( sock, addr, file ) -> None:
 
         mutex1.acquire()
         length = len( cwnd )
+        if file.closed and length == 0 :
+            # print('lost thread closed')
+            return None
         if( length > 0 ):
             timestamp = cwnd[0].timestamp
             lostHeader = cwnd[0].header
@@ -162,7 +163,7 @@ def listenForAck( sock, file ) -> None:
             return None
 
         # listen for new packet
-        # print('1')
+        # # print('1')
         packet, addr = sock.recvfrom( 1040 )
         recvSeqN, recvAckN, remote_buffer_size, recvAck = util.getHeader( packet[0:16], seqN = True, ackN = True, window = True, ack = True )        
         

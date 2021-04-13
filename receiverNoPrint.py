@@ -59,7 +59,7 @@ class RecvServer(object):
                 self.finBit = 1
                 self.file.close()
                 self.transEnd = True
-                # print('All packets received successfully. Closing Connection...')
+                print('All packets received successfully. Closing Connection...')
                 self.sendACK(remote_addr)
                 return
             

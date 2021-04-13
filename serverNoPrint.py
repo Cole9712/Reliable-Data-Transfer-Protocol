@@ -100,8 +100,8 @@ def main():
     try:
         listenOn()
     except KeyboardInterrupt:
-        print( "\nThank you for using Coss Transport." )
-        print( "Exiting..." )
+        # print( "\nThank you for using Coss Transport." )
+        # print( "Exiting..." )
         sys.exit( 0 )
 
 if __name__ == "__main__":
