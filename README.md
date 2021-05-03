@@ -66,7 +66,7 @@ The client will request for the specified file from the server and write it into
 *   The **acknowledge number** is the next sequence number expected from the other host
 *   **Selective repeat** pipelined protocol:
     *   The sender allows the receiver to acknowledge out-of-order segments selectively rather than just cumulatively acknowledging the correctly received segment
-*   **Timeout**calculation
+*   **Timeout** calculation
     *   sampleRTT is sampled by timing the duration between a segment sent and the segment’s acknowledgement received
     *   estimatedRTT = 0.875 * estimatedRTT + 0.125 * sampleRTT
     *   devRTT = 0.75 * devRTT + 0.25 * | sampleRTT - estimatedRTT |
