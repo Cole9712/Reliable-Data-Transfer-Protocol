@@ -74,7 +74,7 @@ The client will request for the specified file from the server and write it into
 
 
 
-## Three-way Handshaking**
+## Three-way Handshaking
 
 
 ![alt_text](images/image13.png "image_tooltip")
