@@ -2,13 +2,13 @@
 
 ## Description
 
-A UDP file transfer protocol providing reliability, flow control and congestion control. Adapted the main components of TCP to recreate a connection-oriented and pipelined protocol for transmission between two hosts. Also provided interfaces to reliably transfer files from server to client.
+A UDP file transfer protocol provides reliability, flow control, and congestion control. It is adapted to the main components of TCP to recreate a connection-oriented and pipelined protocol for transmission between two hosts. It also provides interfaces to transfer files from server to client reliably.
 
-Since we implemented multiple threads on the server side, and the Ack Listener thread shares the same local window with the Packet Sending thread, the Ack Listener thread keeps popping items out of the window, and the Packet Sending thread keeps pushing items into the windows. It is a producer-consumer synchronization problem. We used semaphore to solve this problem.
+Since we implemented multiple threads on the server side, and the Ack Listener thread shares the same local window with the Packet Sending thread, the Ack Listener thread keeps popping items out of the window, and the Packet Sending line keeps pushing objects into the windows. It is a producer-consumer synchronization problem. We used semaphore to solve this problem
 
 ## Protocol Segment Structure
 
-In our protocol, the header is placed in the first 16 bytes of the UDP payload, and the data comes right after with a maximum size of 1024 bytes. Therefore, the MSS (maximum segment size) is 1040 bytes. We adapted the header structure from the TCP protocol as shown below.
+The protocol's header is placed in the first 16 bytes of the UDP payload, and the data comes right after with a maximum size of 1024 bytes. Therefore, the MSS (full segment size) is 1040 bytes. We adapted the header structure from the TCP protocol, as shown below.
 
 
 ```
@@ -34,7 +34,7 @@ In our protocol, the header is placed in the first 16 bytes of the UDP payload, 
 
 ## Using Our Protocol
 
-Applications can use our protocol by using the command line interface (CLI) we provided. The connection is established as a client-server model, where the server sends out messages as a file and the client receives the messages and writes to a file.
+Applications can use our protocol using the command line interface (CLI) we provided. The connection is established as a client-server model, where the server sends out messages as a file, and the client receives the letters and writes them to a file.
 
 The server can simply run 
 
